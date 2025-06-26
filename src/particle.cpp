@@ -1,4 +1,5 @@
 #include "particle.h"
+#include "world.h"
 #include "utils.h"
 
 Particle::Particle(float x, float y, float r, sf::Color c, std::mt19937& rng)
@@ -11,14 +12,22 @@ Particle::Particle(float x, float y, float r, sf::Color c, std::mt19937& rng)
 	}
 }
 
+/**
+ * @brief Updates particle state
+ * 
+ * @param dt 
+ * @param rng 
+ * @param others 
+ */
+
 void Particle::update(float dt, std::mt19937& rng, std::vector<Particle>& others)
 {
 	age += dt;
 
-	// Energieverbrauch durch Bewegung
-	float speed = dna[static_cast<size_t>(Gene::SPEED)] * 500.f;
+	// Energy consumption through movement
+	float speed = world::particle::speed.transform(dna[static_cast<size_t>(Gene::SPEED)]);
 
-	// Jagd: suche nächstes Ziel in Sichtweite
+	// Hunting: Search for the nearest target within vision range
 	float vision = dna[static_cast<size_t>(Gene::VISION_RADIUS)] * 100.f;
 	Particle* target = nullptr;
 	float minDist = vision;
@@ -46,7 +55,7 @@ void Particle::update(float dt, std::mt19937& rng, std::vector<Particle>& others
 
 		if (attackVal > threshold && similarity > (1.0f - cannibalism))
 		{
-			// Bewegung in Richtung Ziel
+			// Movement towards target
 			sf::Vector2f dir = target->position - position;
 			float len = length(dir);
 			if (len > 0)
@@ -65,7 +74,7 @@ void Particle::update(float dt, std::mt19937& rng, std::vector<Particle>& others
 	}
 	else
 	{
-		// Zufallsbewegung
+		// random movement
 		std::uniform_real_distribution<float> dir(-1.f, 1.f);
 		velocity.x = dir(rng) * speed;
 		velocity.y = dir(rng) * speed;
@@ -74,7 +83,7 @@ void Particle::update(float dt, std::mt19937& rng, std::vector<Particle>& others
 
 	energy -= dt * 0.01f * length(velocity);
 
-	// Fenstergrenzen
+	// window boundaries
 	position.x = std::clamp(position.x, 0.f, 800.f - radius * 2);
 	position.y = std::clamp(position.y, 0.f, 800.f - radius * 2);
 }
